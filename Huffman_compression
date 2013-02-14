@@ -1,0 +1,641 @@
+#include<stdio.h>
+#include<stdlib.h>
+struct list
+{
+  char alpha;
+	int fre;
+	struct list *prev;
+	struct list *next;
+	struct list *left;
+	struct list *right;
+	
+};
+
+int power(int a,int b);
+void compression(char *c);
+void traverse(struct list *p,int tree);
+
+
+int code[20];
+int top=0;
+struct list *head,*head1;
+
+struct h_code
+{
+	char alpha;
+	int val;
+	int count;
+	struct code *ptr;
+	struct h_code *next;
+};
+
+struct h_code *p1,*p2,*p3;
+
+struct code
+{
+	int val;
+	struct code *next;
+};
+
+struct code *t1,*t2,*t3;
+
+struct compress
+{
+	int val;
+	struct compress *next;
+};
+
+struct trans
+{
+	char alpha;
+	int val;
+	short int count;
+	short int next;
+};
+struct compress *c1,*rec,*c2;
+
+struct read
+{
+	int val;
+};
+struct read t;
+
+int main(int argc,char *argv[])
+{
+	FILE *f,*f1;
+	int ch,ch1;
+	int pos=-1;
+	int size,i,j;
+	char alpha[256],swap;
+	int freq[256],swap1;
+	
+	
+	head=NULL;
+	head1=NULL;
+	p1=NULL;
+	p2=NULL;
+	f=fopen(argv[1],"r");
+	if(f==NULL)
+	{
+		printf("File doesn't exist\n");
+		exit(0);
+	}
+
+	while((ch=getc(f))!=EOF)
+	{
+		
+		int flag=0;
+		for(i=0;i<=pos;i++)
+		{
+			if(ch==alpha[i])
+			{
+				flag=1;
+				break;
+			}
+		}
+		
+		if(flag==0)
+		{
+			int count=0;
+			f1=fopen(argv[1],"r");
+			while((ch1=getc(f1))!=EOF)
+			{
+				if(ch1==ch)
+				count++;
+			}
+			fclose(f1);
+			pos++;
+			alpha[pos]=ch;
+			freq[pos]=count;
+		}
+	
+	}
+
+	fcloseall();
+
+	for(i=0;i<pos-1;i++)
+	{
+		for(j=i+1;j<pos;j++)
+		{
+			if(freq[i]>freq[j])
+			{
+				swap=alpha[i];
+				alpha[i]=alpha[j];
+				alpha[j]=swap;
+
+				swap1=freq[i];
+				freq[i]=freq[j];
+				freq[j]=swap1;
+			}
+		}
+	}
+
+	f=fopen("data","wb");
+	for(i=0;i<pos;i++)
+	{
+		struct list *nod=(struct list *)malloc(sizeof(struct list));
+		
+		nod->alpha=alpha[i];
+		nod->fre=freq[i];
+		nod->prev=NULL;
+		nod->next=NULL;
+		nod->left=NULL;
+		nod->right=NULL;
+		
+		fwrite(nod,sizeof(struct list),1,f);
+		if(head==NULL)
+		{
+			head=nod;
+		}
+		else
+		{
+			head1=head;
+			while(head1->next!=NULL)
+			head1=head1->next;
+
+			head1->next=nod;
+			nod->prev=head1;
+		}
+			
+	}
+	fclose(f);
+			
+	head1=head;
+	
+/*	while(head1->next!=NULL)
+	{
+	printf("%c\t%d\t%d\t%d\n",head1->alpha,head1->fre,head1->prev,head1->next);
+	head1=head1->next;
+	
+	}
+	printf("%c\t%d\t%d\t%d\n",head1->alpha,head1->fre,head1->prev,head1->next);
+
+	head1=head;
+	
+	printf("\n\n");	
+	while(head1->next!=NULL)
+	{
+		printf("%c\t%d\n",head1->alpha,head1->fre);
+		head1=head1->next;
+	}
+	printf("%c\t%d\n\n",head1->alpha,head1->fre);
+
+*/
+
+	
+	while(head!=NULL)
+	{
+		struct list *temp;
+		if(head->next==NULL)
+		break;
+
+		struct list *node=(struct list *)malloc(sizeof(struct list));
+		node->prev=NULL;
+		node->next=NULL;
+		temp=head->next;
+		node->left=head;
+		node->right=head->next;
+		node->fre=head->fre + temp->fre;
+		node->alpha='0';
+		
+		head=temp->next;
+		
+		if(head==NULL)
+		head=node;
+
+		else
+		{
+			temp=head;
+			
+			while(temp->next!=NULL)
+			{
+				if(temp->fre >= node->fre)
+				break;
+		
+				temp=temp->next;
+			}
+			if(temp->next==NULL)
+			{
+				node->prev=temp;
+				temp->next=node;
+			}
+		
+			else
+			{
+			
+				if(temp==head)
+				{
+					node->next=head;
+					head->prev=node;
+					head=node;
+				}
+				else
+				{
+					node->prev=temp->prev;
+					node->next=temp;
+					temp->prev->next=node;
+					temp->prev=node;
+				}
+			}
+		}
+
+		struct list *temp1;
+		temp1=head;
+		while(temp1->next!=NULL)
+		{
+			printf("%c\t%d\n",temp1->alpha,temp1->fre);
+			temp1=temp1->next;
+		}
+		printf("%c\t%d\n",temp1->alpha,temp1->fre);
+		
+		
+	}
+
+
+	
+	if(head->left==NULL)
+	{
+	printf("character= %c \t code= %d\n",head->alpha,0);
+	struct h_code *new1=(struct h_code *)malloc(sizeof(struct h_code));
+	new1->alpha=head->alpha;
+	new1->next=NULL;
+	new1->val=0;
+	new1->count=1;
+	struct code *new2=(struct code *)malloc(sizeof(struct code));
+	new2->val=0;
+	new2->next=NULL;
+	
+	new1->ptr=new2;
+	p1=new1;
+	}
+	else
+	{
+	struct list *t;
+	t=head;
+	traverse(t,0);
+	printf("\n");
+	}
+
+	p3=p1;
+	p2=p1;
+	
+	while(p2!=NULL)
+	{
+		printf("printing values\n");
+		//printf("%c\t%d\t",p2->alpha,p2->val);
+			
+		t2=p2->ptr;
+		while(t2!=NULL)
+		{
+			printf("%d",t2->val);
+			t2=t2->next;
+		}
+		printf("\n");
+		p2=p2->next;
+	}
+
+	compression(argv[1]);	
+	print();
+			
+}
+
+void traverse(struct list *p,int tree)
+{
+	int i,j;
+
+	
+	
+	printf("\n");
+
+	if(p->left!=NULL)
+	{
+		code[top]=0;
+		top++;
+		traverse(p->left,0);
+	}	
+	if(p->right!=NULL)
+	{
+		code[top]=1;
+		top++;
+		traverse(p->right,0);
+	}
+	
+	if(p->alpha!='0' || (p->alpha=='0' && p->left==NULL && p->right==NULL))
+	{
+		int sum=0;
+		int j=0;
+		printf("char=%c\t",p->alpha);
+		for(i=0;i<top;i++)
+		{
+			sum=sum+(code[i]*power(2,i));
+			printf("%d",code[i]);
+		}
+
+		struct h_code *new=(struct h_code *)malloc(sizeof(struct h_code));
+		new->alpha=p->alpha;
+		new->next=NULL;
+		new->val=sum;
+		new->count=top;
+		
+		t1=NULL;
+		t2=NULL;
+		for(i=0;i<top;i++)
+		{
+			struct code *new1=(struct code *)malloc(sizeof(struct code));
+			new1->val=code[i];
+			new1->next=NULL;
+			if(t1==NULL)
+			t1=new1;
+			else
+			{
+				t2=t1;
+				while(t2->next!=NULL)
+				t2=t2->next;
+				t2->next=new1;
+			}
+			
+		}
+		new->ptr=t1;
+	
+		if(p1==NULL)
+		p1=new;
+		else
+		{
+			p2=p1;
+			while(p2->next!=NULL)
+			p2=p2->next;
+			p2->next=new;
+		}
+		
+		
+
+	}
+	printf("\n");
+	
+	top--;
+	
+
+}
+
+
+
+int power(int a,int b)
+{
+	int sum=0;
+	if(b==0)	
+	return 1;
+	else if(b==1)
+	return a;
+	else
+	{
+		int i;
+		
+		for(i=1;i<=b-1;i++)
+		{
+			if(sum==0)
+			sum=4;
+			else
+			sum=sum*2;
+		}
+	}
+	return sum;
+}
+
+void compression(char *file)
+{
+	
+	FILE *f1,*f2;
+	int ch;
+	f1=fopen(file,"r");
+
+	printf("printing file characters\n");		
+	while((ch=getc(f1))!=EOF)
+	{
+	
+		p2=p1;
+		while(p2!=NULL)
+		{
+			if(p2->alpha==ch)
+			{
+				printf("%c\t",p2->alpha);
+			
+				t2=p2->ptr;
+				while(t2!=NULL)
+				{
+					struct compress *new2=(struct compress *)malloc(sizeof(struct compress));
+					new2->val=t2->val;
+					new2->next=NULL;
+		
+					if(c1==NULL)
+					{
+						c1=new2;
+						rec=new2;
+					}	
+					else
+					{
+						rec->next=new2;
+						rec=new2;
+					}
+					t2=t2->next;
+				}
+			break;
+			}
+		printf("");
+
+		p2=p2->next;
+		}
+	}
+
+	/*c2=c1;
+	while(c2!=NULL)
+	{
+		printf("%d",c2->val);
+		c2=c2->next;
+	}*/
+
+	f2=fopen("bfile","wb");
+
+	int cal=0;
+	c2=c1;
+	while(c2!=NULL)
+	{
+		c2=c2->next;
+		cal++;
+	}
+	printf("cal=%d\n",cal);
+	cal=cal%32;
+	printf("cal=%d\n",cal);
+	struct h_code *p;
+	p=p1;
+	t.val=cal;
+	fwrite(&t,sizeof(struct read),1,f2);
+	while(p!=NULL)
+	{
+		struct trans tr;
+		tr.alpha=p->alpha;
+		tr.val=p->val;
+		tr.count=p->count;
+		if(p->next==NULL)
+		tr.next=0;
+		else
+		tr.next=1;
+		fwrite(&tr,sizeof(struct trans),1,f2);
+		p=p->next;
+	}
+
+
+	c2=c1;
+	printf("printing cal\n");
+	
+	
+	while(c2!=NULL)
+	{
+		unsigned int sum=0;
+		for(ch=0;ch<32;ch++)
+		{
+			if(c2==NULL)
+			break;
+			sum=sum+(c2->val*power(2,ch));
+			
+			c2=c2->next;
+		}
+		
+	printf("\t%u\t",sum);
+		putw(sum,f2);
+		
+	}
+
+	fcloseall();
+	
+}
+
+void print()
+{
+	printf("printing again\n");
+
+	p2=p1;
+	
+	while(p2!=NULL)
+	{
+		printf("%c\t%d\t%d\t",p2->alpha,p2->count,p2->val);
+			
+		t2=p2->ptr;
+		while(t2!=NULL)
+		{
+			printf("%d",t2->val);
+			t2=t2->next;
+		}
+		printf("\n");
+		p2=p2->next;
+	}
+	
+}
+
+void decompression()
+{
+	FILE *f;
+	f=fopen("bfile","rb");
+	int ch,i;
+	struct compress *h1,*h2,*rec;
+	h1=NULL;
+	h2=NULL;
+	while((ch=getw(f))!=EOF)
+	{
+
+		
+		for(i=0;i<32;i++)
+		{
+			struct compress *new=(struct compress *)malloc(sizeof(struct compress));
+			new->next=NULL;
+			if((ch & power(2,i)) == power(2,i))
+			{
+				new->val=1;
+				if(h1==NULL)
+				{
+				h1=new;
+				rec=new;
+				}
+				else
+				{
+					rec->next=new;
+					rec=new;
+				}
+				//printf("%d",1);
+			}
+			else
+			{
+				new->val=0;
+				if(h1==NULL)
+				{
+				h1=new;
+				rec=new;
+				}
+				else
+				{
+					rec->next=new;
+					rec=new;
+				}
+		
+				//printf("%d",0);
+			}
+		}	
+		//printf("\t%u\t\n",ch);
+	
+	}
+
+	fclose(f);
+	printf("\n\n");
+
+	h2=h1;
+	int size=0;
+	while(h2!=NULL)
+	{
+		//printf("%d",h2->val);
+		h2=h2->next;
+		size++;
+	}
+
+	f=fopen("decompress","w");
+
+	if(f==NULL)
+	{
+		printf("file doesn't exist\n");
+		exit(0);
+	}
+
+	
+
+	int sum=0,j=0,count=0,k=0;	
+	int arr[size];		
+	
+	while(h1!=NULL)
+	{
+		arr[j++]=h1->val;
+		h1=h1->next;
+	}
+
+	i=0;	
+	for(k=0;k<j;k++)
+	{
+		sum=sum+arr[k]*power(2,i++);
+		count++;
+		//printf("%d\t%d\n",sum,count);
+		p2=p1;
+
+		while(p2!=NULL)
+		{
+			if(p2->val==sum && p2->count==count)
+			{
+				sum=0;count=0;i=0;
+				
+				fputc(p2->alpha,f);
+				break;
+			}
+			p2=p2->next;
+		}		
+
+	}
+
+	
+
+}
